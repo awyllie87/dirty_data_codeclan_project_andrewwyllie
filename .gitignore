@@ -20,6 +20,9 @@
 .Rhistory
 .Rapp.history
 
+# Notebook HTML
+*.nb.html
+
 # Session Data files
 .RData
 
