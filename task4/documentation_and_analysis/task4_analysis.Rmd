@@ -21,9 +21,9 @@ Unsurprisingly, I got nothing back. Intersecting just 2015 and 2016 returned 93 
 
 At this point, it makes the most sense to me to work on binding 2015 and 2016, then bring the combined might to bear on 2017.
 
-### Dealing with 2015 and 2016
+## Dealing with 2015 and 2016
 
-#### Identifying differences
+### Identifying differences
 
 One final step was to use `setdiff()` to see specifically what columns 2015 and 2016 differed on:
 ```{r eval=FALSE}
@@ -46,7 +46,7 @@ I could also infer some things from the difference moving to 2016. We collected:
 
 The difference between the two more generally was a variance in what "treats" were included, and what the nonsense questions were.
 
-#### Bind the data.
+### Bind the data
 
 Since I had so many common columns, the first thing I did was use `bind_rows()` to combine the tables. I ended up with a table with an extra 30 columns in it compared to 2016, accounting for every column of variance identified earlier.
 
@@ -58,3 +58,25 @@ bound_table <- bound_table %>%
 ```
 
 Turns out **10 columns were completely empty**.
+
+### Organise this mess
+
+The data broadly falls into three categories: 
+
+* metadata
+* [JOY/MEH/DESPAIR] treat ratings 
+* freeform nonsense
+
+As such it would be useful to arrange it that way before doing anything further.
+
+In the context of this table, I'm considering metadata to be 
+
+* Age
+* Gender
+* Country
+* State/Province/County
+
+Organising the treat rating columns, I discover that there are numerous columns that are meant to match up, but have different names, so I return and amend those before the bind happens.
+
+  select(1:york_peppermint_patties) %>% 
+  select(1:6, sort(peek_vars()))
