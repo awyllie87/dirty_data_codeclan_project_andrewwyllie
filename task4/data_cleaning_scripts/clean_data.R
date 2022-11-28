@@ -11,7 +11,6 @@ data_2015 <- read_xlsx(here("raw_data/boing-boing-candy-2015.xlsx")) %>%
   select(where(~!all(is.na(.x)))) %>% 
   rename(age = how_old_are_you,
          going_out = are_you_going_actually_going_trick_or_treating_yourself,
-         box_raisins = box_o_raisins,
          hersheys_kissables = hershey_s_kissables,
          hersheys_milk_chocolate = hershey_s_milk_chocolate,
          hersheys_dark_chocolate = dark_chocolate_hershey,
@@ -32,10 +31,9 @@ data_2016 <- read_xlsx(here("raw_data/boing-boing-candy-2016.xlsx")) %>%
          age = how_old_are_you,
          country = which_country_do_you_live_in,
          region = which_state_province_county_do_you_live_in,
-         box_raisins = boxo_raisins,
+         box_o_raisins = boxo_raisins,
          hersheys_milk_chocolate = hershey_s_milk_chocolate,
          jolly_ranchers_bad_flavor = jolly_rancher_bad_flavor,
-         licorice = licorice_yes_black,
          mms_regular = regular_m_ms,
          mms_peanut = peanut_m_m_s,
          mms_blue = blue_m_ms,
@@ -54,5 +52,29 @@ bound_table_1516 <- data_2015 %>%
   
 data_2017 <- read_xlsx(here("raw_data/boing-boing-candy-2017.xlsx")) %>% 
   clean_names() %>% 
-  select(where(~!all(is.na(.x))))
+  select(where(~!all(is.na(.x)))) %>% 
+  rename_with(~str_remove(., "^q.\\_")) %>% 
+  select(-1) %>% 
+  slice(-1) %>% 
+  rename(region = state_province_county_etc,
+         anonymous_brown_globs_that_come_in_black_and_orange_wrappers = 
+           anonymous_brown_globs_that_come_in_black_and_orange_wrappers_a_k_a_mary_janes,
+         x100_grand_bar = `100_grand_bar`,
+         box_o_raisins = boxo_raisins,
+         hersheys_milk_chocolate = hershey_s_milk_chocolate,
+         jolly_ranchers_bad_flavor = jolly_rancher_bad_flavor,
+         mms_regular = regular_m_ms,
+         mms_peanut = peanut_m_m_s,
+         mms_blue = blue_m_ms,
+         mms_red = red_m_ms,
+         mms_green_party = green_party_m_ms,
+         mms_independent = independent_m_ms,
+         mms_abstained = abstained_from_m_ming,
+         reeses_peanut_butter_cups = reese_s_peanut_butter_cups,
+         sourpatch_kids = sourpatch_kids_i_e_abominations_of_nature,
+         sweetums = sweetums_a_friend_to_diabetes) %>%
+  select(-(joy_other:last_col()))
   
+full_bind <- bound_table_1516 %>% 
+  bind_rows(data_2017) %>% 
+select(1:5, sort(peek_vars()))  
