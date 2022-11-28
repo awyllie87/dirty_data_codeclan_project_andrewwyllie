@@ -11,13 +11,50 @@ Oh, boy.
 
 The three sheets are all organised and labelled differently, on top of having different questions, so the first thing I need to do is find commonalities to unify across.
 
-I figured a good place to start was to import the three sheets, run `clean_names()` from `janitor` across them, export the column names as 3 vectors and just see if there was immediately any columns in column. I expected 2015 and 2016 might, but I wasn't expecting much like with 2017, as the headers have been formatted more cleanly.
+I figured a good place to start was to import the three sheets, run `clean_names()` from `janitor` across them, and then see if there was any immediate common factors. From glancing at the tables I suspected that the header reformat for 2017 would mean it was entirely unique compared to the previous years.
 
-I did this using `intersect()` in a form similar to this
+I did this using `intersect()` in a form similar to this:
 ```{r eval=FALSE}
-intersect(intersect(2015data,2016data),2017data)
+intersect(intersect(colnames(2015data),colnames(2016data)),colnames(2017data))
 ```
 Unsurprisingly, I got nothing back. Intersecting just 2015 and 2016 returned 93 columns though, which is encouraging!
 
-At this point, it makes the most sense to me to work on joining 2015 and 2016, then bring the combined might to bear on 2017.
+At this point, it makes the most sense to me to work on binding 2015 and 2016, then bring the combined might to bear on 2017.
 
+### Dealing with 2015 and 2016
+
+#### Identifying differences
+
+One final step was to use `setdiff()` to see specifically what columns 2015 and 2016 differed on:
+```{r eval=FALSE}
+setdiff(colnames(2015data), colnames(2016data))
+setdiff(colnames(2016data), colnames(2015data))
+```
+
+This gives me two pieces of information immediately. 
+
+PREFACE: this doesn't account for columns having the same data with a variant header -
+
+* 2015 has 31 columns that 2016 doesn't
+* 2016 has 30 columns that 2015 doesn't
+
+I could also infer some things from the difference moving to 2016. We collected:
+
+* Respondent metadata: gender, geographical
+* More candy and treat questions
+* More nonsense questions
+
+The difference between the two more generally was a variance in what "treats" were included, and what the nonsense questions were.
+
+#### Bind the data.
+
+Since I had so many common columns, the first thing I did was use `bind_rows()` to combine the tables. I ended up with a table with an extra 30 columns in it compared to 2016, accounting for every column of variance identified earlier.
+
+Next up, I was seeing quite a lot of NAs in some of the nonsense columns, so I checked if any were completely empty and discarded them from the table if they were.
+
+```{r eval=FALSE}
+bound_table <- bound_table %>% 
+  select(where(~all(is.na(.x))))
+```
+
+Turns out **10 columns were completely empty**.
