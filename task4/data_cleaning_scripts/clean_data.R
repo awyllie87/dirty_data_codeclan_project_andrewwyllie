@@ -78,3 +78,8 @@ data_2017 <- read_xlsx(here("raw_data/boing-boing-candy-2017.xlsx")) %>%
 full_bind <- bound_table_1516 %>% 
   bind_rows(data_2017) %>% 
 select(1:5, sort(peek_vars()))  
+
+full_bind %>% 
+  write.csv(file = here("clean_data/halloween_clean_simplified.csv"), row.names = FALSE)
+
+rm(bound_table_1516, data_2015, data_2016, data_2017, full_bind)
