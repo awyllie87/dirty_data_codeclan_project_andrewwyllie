@@ -4,6 +4,41 @@ output: html_notebook
 ---
 
 ```{r}
-read_csv(here("clean_data/birds_clean.csv"))
+library(tidyverse)
+library(here)
 ```
 
+
+```{r}
+birds <- read_csv(here("clean_data/birds_clean.csv"))
+```
+```{r}
+birds %>% 
+  filter(!is.na(count)) %>% 
+  group_by(common_name) %>% 
+  summarise(scientific_name, abbreviation, sightings = n()) %>% 
+  distinct() %>% 
+  arrange(desc(sightings))
+```
+
+Which bird had the highest total count?
+
+```{r}
+birds %>% 
+  filter(!is.na(count)) %>% 
+  group_by(common_name) %>% 
+  summarise(scientific_name, abbreviation, total_count = sum(count)) %>% 
+  distinct() %>% 
+  arrange(desc(total_count))
+```
+
+Which bird had the highest total count above a latitude of -30?
+
+```{r}
+birds %>% 
+  filter(!is.na(count), lat > -30) %>% 
+  group_by(common_name) %>% 
+  summarise(scientific_name, abbreviation, total_count = sum(count)) %>% 
+  distinct() %>% 
+  arrange(desc(total_count))
+```
