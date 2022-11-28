@@ -1,0 +1,23 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Cleaning
+
+Oh, boy.
+
+## First steps
+
+The three sheets are all organised and labelled differently, on top of having different questions, so the first thing I need to do is find commonalities to unify across.
+
+I figured a good place to start was to import the three sheets, run `clean_names()` from `janitor` across them, export the column names as 3 vectors and just see if there was immediately any columns in column. I expected 2015 and 2016 might, but I wasn't expecting much like with 2017, as the headers have been formatted more cleanly.
+
+I did this using `intersect()` in a form similar to this
+```{r eval=FALSE}
+intersect(intersect(2015data,2016data),2017data)
+```
+Unsurprisingly, I got nothing back. Intersecting just 2015 and 2016 returned 93 columns though, which is encouraging!
+
+At this point, it makes the most sense to me to work on joining 2015 and 2016, then bring the combined might to bear on 2017.
+
