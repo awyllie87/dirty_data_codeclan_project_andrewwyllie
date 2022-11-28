@@ -98,5 +98,60 @@ library(here)
 source(here("data_cleaning_scripts/clean_data.R"))
 halloween <- read_csv(here("clean_data/halloween_clean_simplified.csv"))
 ```
+```{r}
+halloween %>% 
+  summarise(across(6:last_col(), ~sum(!is.na(.)))) %>% 
+  mutate(total = rowSums(.)) %>% 
+  select(total)
+```
+
+
+
+
+```{r}
+halloween %>% 
+  filter(!is.na(age), going_out == "Yes") %>% 
+  summarise(avg_age = mean(age))
+```
+
+```{r}
+halloween %>% 
+  filter(!is.na(age), going_out == "No") %>% 
+  summarise(avg_age = mean(age))
+```
+
+```{r}
+halloween %>% 
+  select(6:last_col()) %>% 
+  pivot_longer(cols = everything(), names_to = "candy", values_to = "rating") %>% 
+  group_by(candy, rating) %>% 
+  filter(!is.na(rating)) %>% 
+  summarise(count = n()) %>% 
+  group_by(rating) %>% 
+  slice_max(count)
+```
+
+```{r}
+halloween %>% 
+  filter(!is.na(age)) %>%
+  group_by(starburst) %>% 
+  filter(starburst == "DESPAIR") %>% 
+  summarise(votes = n())
+```
+
+```{r}
+halloween %>% 
+  select(gender, 6:last_col()) %>% 
+  pivot_longer(cols = 2:last_col(), names_to = "candy", values_to = "rating") %>% 
+  group_by(candy, rating, gender) %>% 
+  filter(!is.na(rating), !is.na(gender)) %>% 
+  mutate(score = recode(rating, "DESPAIR" = -1, "JOY" = 1, "MEH" = 0)) %>% 
+  summarise(score = sum(score)) %>% 
+  group_by(gender, candy) %>% 
+  summarise(score = sum(score)) %>% 
+  group_by(gender) %>% 
+  slice_max(score)
+```
+
 
 

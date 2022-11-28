@@ -78,7 +78,11 @@ data_2017 <- read_xlsx(here("raw_data/boing-boing-candy-2017.xlsx")) %>%
   
 full_bind <- bound_table_1516 %>% 
   bind_rows(data_2017) %>% 
-select(1:5, sort(peek_vars()))  
+  select(1:5, sort(peek_vars())) %>% 
+  # Get rid of garbage age inputs
+  mutate(age = as.integer(age)) %>% 
+  mutate(age = case_when(age > 100 ~ NA_integer_,
+                         TRUE ~ age))
 
 full_bind %>% 
   write.csv(file = here("clean_data/halloween_clean_simplified.csv"), row.names = FALSE)
