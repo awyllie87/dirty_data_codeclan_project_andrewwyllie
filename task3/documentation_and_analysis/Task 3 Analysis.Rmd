@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r}
+```{r message=FALSE}
 library(tidyverse)
 library(here)
 ```
@@ -12,16 +12,19 @@ library(here)
 ```{r}
 birds <- read_csv(here("clean_data/birds_clean.csv"))
 ```
+
+# Which bird had the most individual sightings?
 ```{r}
 birds %>% 
   filter(!is.na(count)) %>% 
   group_by(common_name) %>% 
   summarise(scientific_name, abbreviation, sightings = n()) %>% 
   distinct() %>% 
-  arrange(desc(sightings))
+  arrange(desc(sightings)) %>% 
+  head(2)
 ```
 
-Which bird had the highest total count?
+# Which bird had the highest total count?
 
 ```{r}
 birds %>% 
@@ -29,10 +32,11 @@ birds %>%
   group_by(common_name) %>% 
   summarise(scientific_name, abbreviation, total_count = sum(count)) %>% 
   distinct() %>% 
-  arrange(desc(total_count))
+  arrange(desc(total_count)) %>% 
+  head(2)
 ```
 
-Which bird had the highest total count above a latitude of -30?
+# Which bird had the highest total count above a latitude of -30?
 
 ```{r}
 birds %>% 
@@ -40,5 +44,38 @@ birds %>%
   group_by(common_name) %>% 
   summarise(scientific_name, abbreviation, total_count = sum(count)) %>% 
   distinct() %>% 
-  arrange(desc(total_count))
+  arrange(desc(total_count)) %>% 
+  head(2)
 ```
+
+# How many different types of birds were only ever seen in groups of 1?
+
+```{r}
+birds %>% 
+  filter(!is.na(count)) %>% 
+  group_by(common_name) %>% 
+  filter(n_distinct(count) == 1, count == 1) %>%
+  ungroup() %>% 
+  summarise(n_solo_birds = length(unique(common_name)))
+```
+
+# How many penguins were seen?
+
+```{r}
+birds %>% 
+  filter(!is.na(count)) %>% 
+  filter(grepl("+[Pp]enguin+", common_name)) %>%
+  summarise(common_name, scientific_name, abbreviation, count) %>% 
+  summarise(total_penguins = sum(count))
+
+birds %>% 
+  filter(!is.na(count)) %>% 
+  group_by(common_name) %>% 
+  filter(grepl("+[Pp]enguin+", common_name)) %>%
+  summarise(common_name, scientific_name, abbreviation, total_count = sum(count)) %>% 
+  distinct() %>% 
+  arrange(common_name)
+```
+
+
+
