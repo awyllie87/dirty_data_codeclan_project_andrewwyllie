@@ -16,6 +16,7 @@ data_2015 <- read_xlsx(here("raw_data/boing-boing-candy-2015.xlsx")) %>%
          hersheys_dark_chocolate = dark_chocolate_hershey,
          jolly_ranchers_bad_flavor = jolly_rancher_bad_flavor,
          reeses_peanut_butter_cups = reese_s_peanut_butter_cups,
+         licorice_yes_black = licorice,
          mms_peanut = peanut_m_m_s,
          mms_regular = regular_m_ms,
          mms_mint = mint_m_ms) %>% 

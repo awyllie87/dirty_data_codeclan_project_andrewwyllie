@@ -76,7 +76,27 @@ In the context of this table, I'm considering metadata to be
 * Country
 * State/Province/County
 
-Organising the treat rating columns, I discover that there are numerous columns that are meant to match up, but have different names, so I return and amend those before the bind happens.
+Organising the treat rating columns, I discover that there are numerous columns that are meant to match up but have different names, so I return and amend those before the bind happens. For the sake of the basic analysis, I also choose to omit the entire freeform section from the tables. I might restore them later for fun stuff. Maybe.
 
-  select(1:york_peppermint_patties) %>% 
-  select(1:6, sort(peek_vars()))
+After that is done, repeating the process again with 2017 is reasonably straightforward. I just need to start by trimming the Q#_ prefix from the requisite columns and renaming whatever is required to match previous convention.
+
+### A note on duplicate columns
+
+There's a few instances where the wording of the treat changes slightly between years, such as "Sweetums" becoming "Sweetums (a friend to diabetes)" and licorice changing to Not Black and Yes Black.
+
+The reality is these could provoke the respondents into different answers, but for sake of simplicity I am combining where it seems reasonable.
+
+# Analysis
+
+
+```{r}
+library(tidyverse)
+library(here)
+```
+
+```{r}
+source(here("data_cleaning_scripts/clean_data.R"))
+halloween <- read_csv(here("clean_data/halloween_clean_simplified.csv"))
+```
+
+
