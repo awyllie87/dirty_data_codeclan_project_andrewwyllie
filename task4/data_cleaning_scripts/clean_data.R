@@ -5,6 +5,7 @@ library(janitor)
 library(tidyselect)
 library(stringr)
 library(lubridate)
+library(snakecase)
 
 data_2015_clean <- read_xlsx(here("raw_data/boing-boing-candy-2015.xlsx")) %>% 
   clean_names() %>% 
@@ -130,7 +131,21 @@ full_bind_simple <- full_bind_clean %>%
   # Force age to integer, accept this will create a new additional NAs, deal with intentional sabotage
   mutate(age = as.integer(age)) %>% 
   mutate(age = case_when(age > 100 ~ NA_integer_,
-                         TRUE ~ age))
+                         TRUE ~ age)) %>% 
+  # Save me from regular expressions
+  mutate(country = to_snake_case(country)) %>% 
+  mutate(country = case_when(
+    str_detect(country, "[:digit:]") ~ "OTHER",
+    str_detect(country, "m[eu]r|united_s|alaska|^cal|^us|new_(?!z)|nor|pi.t|[tu][_e]s$|[_s]a$|yy") ~ "USA",
+    str_detect(country, "uk|^en+|sco|om$|_k") ~ "UK",
+    str_detect(country, "^can$|^canad|tan$") ~ "CANADA",
+    str_detect(country, "sp") ~ "SPAIN",
+    str_detect(country, "ds$") ~ "NETHERLANDS",
+    str_detect(country, "south_[ak]|aus|^[bjp]|ch|^c[or]|[cey][ao]$|sw|rk$|[fs]i|g.r|.ce|^[itu][anr][ide]|ze|ong$") 
+    ~ str_to_upper(str_replace(country,"_"," ")), # keep
+    is.na(country) ~ "NOT SPECIFIED",
+    TRUE ~ "OTHER"
+  ))
 
 full_bind_clean %>% 
   write.csv(file = here("clean_data/halloween.csv"), row.names = FALSE)

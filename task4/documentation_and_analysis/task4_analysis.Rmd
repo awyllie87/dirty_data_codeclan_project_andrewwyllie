@@ -89,24 +89,25 @@ The reality is these could provoke the respondents into different answers, but f
 # Analysis
 
 
-```{r}
+```{r message=FALSE}
 library(tidyverse)
 library(here)
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE, error=FALSE}
 source(here("data_cleaning_scripts/clean_data.R"))
 halloween <- read_csv(here("clean_data/halloween_simplified.csv"))
 ```
+### 1. What is the total number of candy ratings given across the three years. (Number of candy ratings, not the number of raters. Don’t count missing values)
+
 ```{r}
 halloween %>% 
-  summarise(across(6:last_col(), ~sum(!is.na(.)))) %>% 
+  summarise(across(7:last_col(), ~sum(!is.na(.)))) %>% 
   mutate(total = rowSums(.)) %>% 
   select(total)
 ```
 
-
-
+### 2. What was the average age of people who are going out trick or treating?
 
 ```{r}
 halloween %>% 
@@ -114,11 +115,15 @@ halloween %>%
   summarise(avg_age = round(mean(age),1))
 ```
 
+### 3. What was the average age of people who are not going trick or treating?
+
 ```{r}
 halloween %>% 
   filter(!is.na(age), going_out == "No") %>% 
   summarise(avg_age = round(mean(age), 1))
 ```
+
+### 4. For each of joy, despair and meh, which candy bar received the most of these ratings?
 
 ```{r}
 halloween %>% 
@@ -131,12 +136,22 @@ halloween %>%
   slice_max(count)
 ```
 
+### 5. How many people rated Starburst as despair?
+
 ```{r}
 halloween %>% 
   group_by(starburst) %>% 
   filter(starburst == "DESPAIR") %>% 
   summarise(votes = n())
 ```
+
+### 6. What was the most popular candy bar by this rating system for each gender in the dataset ?
+
+Scoring:
+
+* Joy +1
+* Meh 0
+* Despair -1
 
 ```{r}
 halloween %>% 
@@ -152,3 +167,34 @@ halloween %>%
   slice_max(score) %>% 
   arrange(-score)
 ```
+
+### 7. What was the most popular candy bar in each year?
+
+Scoring:
+
+* Joy +1
+* Meh 0
+* Despair -1
+
+```{r}
+halloween %>% 
+  select(year, 7:last_col()) %>% 
+  pivot_longer(cols = 2:last_col(), names_to = "candy", values_to = "rating") %>% 
+  group_by(candy, rating, year) %>% 
+  filter(!is.na(rating)) %>% 
+  mutate(score = recode(rating, "DESPAIR" = -1, "JOY" = 1, "MEH" = 0)) %>% 
+  summarise(score = sum(score)) %>% 
+  group_by(year, candy) %>% 
+  summarise(score = sum(score)) %>% 
+  group_by(year) %>%
+  slice_max(score) %>% 
+  arrange(year)
+```
+
+### 8. What was the most popular candy bar by this rating for people in US, Canada, UK, and all other countries?
+
+Scoring:
+
+* Joy +1
+* Meh 0
+* Despair -1
