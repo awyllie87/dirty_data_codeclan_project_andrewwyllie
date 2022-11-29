@@ -198,3 +198,75 @@ Scoring:
 * Joy +1
 * Meh 0
 * Despair -1
+
+```{r}
+halloween %>% 
+  select(country, 7:last_col()) %>% 
+  pivot_longer(cols = 2:last_col(), names_to = "candy", values_to = "rating") %>% 
+  group_by(candy, rating, country) %>% 
+  filter(!is.na(rating)) %>% 
+  mutate(score = recode(rating, "DESPAIR" = -1, "JOY" = 1, "MEH" = 0),
+         country = case_when(
+           str_detect(country, "USA") ~ country,
+           str_detect(country, "UK") ~ country,
+           str_detect(country, "CANADA") ~ country,
+           str_detect(country, "NOT SPECIFIED") ~ country,
+           TRUE ~ "OTHER")) %>% 
+  summarise(score = sum(score)) %>% 
+  group_by(country, candy) %>% 
+  summarise(score = sum(score)) %>% 
+  group_by(country) %>% 
+  filter(country != "NOT SPECIFIED", candy != "any_full_sized_candy_bar" ) %>% 
+  slice_max(score) %>% 
+  arrange(-score)
+```
+
+```{r}
+halloween2 <- read_csv(here("clean_data/halloween.csv"))
+```
+
+```{r}
+halloween2 %>% 
+  select(joy_other) %>% 
+  mutate(joy_other = case_when(
+    str_detect(joy_other, "(?i)bounty") ~ joy_other,
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(!is.na(joy_other))
+```
+
+```{r}
+joys <- halloween2 %>% 
+  select(joy_other) %>% 
+  filter(!is.na(joy_other)) %>% 
+  pull()
+```
+
+```{r}
+tibble(word(joys, sep = ",")) %>% 
+  rename(word = `word(joys, sep = ",")`) %>% 
+  mutate(word = str_to_lower(str_replace(word, "\\,", ""))) %>% 
+  group_by(word) %>% 
+  summarise(count = n()) %>% 
+  arrange(-count) %>% 
+  slice_max(count, n=10)
+```
+
+```{r}
+despairs <- halloween2 %>% 
+  select(despair_other) %>% 
+  filter(!is.na(despair_other)) %>% 
+  pull()
+```
+
+```{r}
+tibble(word(despairs, sep = ",")) %>% 
+  rename(word = `word(despairs, sep = ",")`) %>% 
+  mutate(word = str_to_lower(str_replace(word, "\\,", ""))) %>% 
+  filter(!word %in% c("anything", "those", "a", "any", "bit", "the")) %>% 
+  group_by(word) %>% 
+  summarise(count = n()) %>% 
+  arrange(-count) %>% 
+  slice_max(count, n= 10)
+```
+
