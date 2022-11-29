@@ -94,6 +94,7 @@ full_bind_clean <- bound_table_1516_clean %>%
   select(-id) %>% 
   relocate(mms_green_party:take_5, .after = whatchamacallit_bars) %>% 
   mutate(year = coalesce(year, "2017")) %>% 
+  mutate(gender = coalesce(gender, "Not Specified")) %>% 
   select(year:region, other_comments:coordinates_x_y, sort(peek_vars())) %>% 
   relocate(other_comments:coordinates_x_y, .after = york_peppermint_patties)
 
@@ -124,7 +125,12 @@ full_bind_simple <- full_bind_clean %>%
             vicodin,
             white_bread,
             whole_wheat_anything),
-         -c(other_comments:coordinates_x_y))
+  # Remove additional questions
+         -c(other_comments:coordinates_x_y)) %>% 
+  # Force age to integer, accept this will create a new additional NAs, deal with intentional sabotage
+  mutate(age = as.integer(age)) %>% 
+  mutate(age = case_when(age > 100 ~ NA_integer_,
+                         TRUE ~ age))
 
 full_bind_clean %>% 
   write.csv(file = here("clean_data/halloween.csv"), row.names = FALSE)

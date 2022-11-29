@@ -54,7 +54,7 @@ Next up, I was seeing quite a lot of NAs in some of the nonsense columns, so I c
 
 ```{r eval=FALSE}
 bound_table <- bound_table %>% 
-  select(where(~all(is.na(.x))))
+  remove_empty(which = "cols")
 ```
 
 Turns out **10 columns were completely empty**.
@@ -96,7 +96,7 @@ library(here)
 
 ```{r}
 source(here("data_cleaning_scripts/clean_data.R"))
-halloween <- read_csv(here("clean_data/halloween_clean_simplified.csv"))
+halloween <- read_csv(here("clean_data/halloween_simplified.csv"))
 ```
 ```{r}
 halloween %>% 
@@ -111,18 +111,18 @@ halloween %>%
 ```{r}
 halloween %>% 
   filter(!is.na(age), going_out == "Yes") %>% 
-  summarise(avg_age = mean(age))
+  summarise(avg_age = round(mean(age),1))
 ```
 
 ```{r}
 halloween %>% 
   filter(!is.na(age), going_out == "No") %>% 
-  summarise(avg_age = mean(age))
+  summarise(avg_age = round(mean(age), 1))
 ```
 
 ```{r}
 halloween %>% 
-  select(6:last_col()) %>% 
+  select(7:last_col()) %>% 
   pivot_longer(cols = everything(), names_to = "candy", values_to = "rating") %>% 
   group_by(candy, rating) %>% 
   filter(!is.na(rating)) %>% 
@@ -133,7 +133,6 @@ halloween %>%
 
 ```{r}
 halloween %>% 
-  filter(!is.na(age)) %>%
   group_by(starburst) %>% 
   filter(starburst == "DESPAIR") %>% 
   summarise(votes = n())
@@ -141,17 +140,15 @@ halloween %>%
 
 ```{r}
 halloween %>% 
-  select(gender, 6:last_col()) %>% 
+  select(gender, 7:last_col()) %>% 
   pivot_longer(cols = 2:last_col(), names_to = "candy", values_to = "rating") %>% 
   group_by(candy, rating, gender) %>% 
-  filter(!is.na(rating), !is.na(gender)) %>% 
+  filter(!is.na(rating)) %>% 
   mutate(score = recode(rating, "DESPAIR" = -1, "JOY" = 1, "MEH" = 0)) %>% 
   summarise(score = sum(score)) %>% 
   group_by(gender, candy) %>% 
   summarise(score = sum(score)) %>% 
   group_by(gender) %>% 
-  slice_max(score)
+  slice_max(score) %>% 
+  arrange(-score)
 ```
-
-
-
