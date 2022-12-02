@@ -1,6 +1,10 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Task 3 - Birds"
+author: "Andrew Wyllie"
+output: 
+  html_document:
+        toc: true
+        toc_float: true
 ---
 
 ```{r message=FALSE}
@@ -12,8 +16,52 @@ library(here)
 ```{r}
 birds <- read_csv(here("clean_data/birds_clean.csv"))
 ```
+# Introduction
 
-# Which bird had the most individual sightings?
+This data is a collection of observations of sea birds off the coast of New Zealand between 1969 and 1990.
+
+The provided spreadsheet, "seabirds.xls", comprises of 4 separate worksheets:
+
+* Ship data
+* Bird data
+* Ship data codes
+* Bird data codes
+
+The two "data codes" sheets simply serve as a glossary to the headers of the first two sheets, respectively. 
+
+## Ship data
+
+This sheet contains nautical information about each individual sighting record alongside a date, time, and note of who made the observation.
+
+## Bird data
+
+This sheet contains information about every individual species of bird identified and the corresponding Record ID for the sighting, effectively serving as a 1:Many connection with Ship data.
+
+The data for each inidvidual bird sighted is exhaustive, though many of the fields are often blank or zero.
+
+# Cleaning the Data
+
+All data cleaning is performed in "/data_cleaning_scripts/clean_data.R".
+
+The primary issue I encountered was discovering that, on import, `read_xls` was attemping to convert certain columns to logical format and was corrupting the data as a result. In order to prevent this -- and for the sake of being extra thorough -- I explicitly declared the expected class for every column during import to ensure nothing went awry.
+
+As a follow-up, I needed to tidy up the `time` column in the `ships` table to remove extraneous incorrect dates added to the column during import. This is easily solved with `format`. The only other adjustments made was renaming a few columns for better readability.
+
+Finally, I trimmed the tables down to only the columns that were necessary for the analysis. This meant removing the vast amount of columns from the ships table, as I simply wasn't interested in much of the nautical information for this particular piece of analysis and only the particularly relevant columns were retained from the birds table, leaving me with a much leaner final table that I might have had otherwise.
+
+Once this was completed, I saved this cleaned data as "birds_clean.csv" and stored it in the "clean_data" directory.
+
+# Assumptions made
+
+The data itself required very little manipulation for this particular task. As such, most of the assumptions made were in the selection of required columns. The questions asked were very general and not looking for any exploration for extremely specific data points. As such I ended up with a pretty generalised final table that consisted of names, dates, counts and locations. 
+
+I retained the name of the observer, the season and the recorded count methodology for flavour, but never used it in any of my final reporting.
+
+One assumption made was that the birds were not to be grouped as far as they could go, so nothing was done to clean the individual bird names in the records. If this was done, a more generalised result could be obtained, but my lack of expertise in ornothology left me with concerns I may combine two similarly-named entries that were in fact completely different birds, so I opted not to.
+
+# Analysis
+
+## Which bird had the most individual sightings?
 ```{r}
 birds %>% 
   filter(!is.na(count)) %>% 
@@ -21,10 +69,12 @@ birds %>%
   summarise(scientific_name, abbreviation, sightings = n()) %>% 
   distinct() %>% 
   arrange(desc(sightings)) %>% 
-  head(2)
+  ungroup() %>% 
+  slice_max(sightings, n = 1)
 ```
+The bird with the most independent sightings (individual records involving that bird) was the Wandering Albatross, with 3,099 individual sightings
 
-# Which bird had the highest total count?
+## Which bird had the highest total count?
 
 ```{r}
 birds %>% 
@@ -33,10 +83,15 @@ birds %>%
   summarise(scientific_name, abbreviation, total_count = sum(count)) %>% 
   distinct() %>% 
   arrange(desc(total_count)) %>% 
-  head(2)
+  ungroup() %>% 
+  slice_max(total_count, n = 1)
 ```
 
-# Which bird had the highest total count above a latitude of -30?
+The bird with the highest total count was the Short-tailed Shearwater, with a recorded total of 982,553.
+
+NOTE: Any individual recorded count of "99,999", according to the Bird data codes, is for any count over 100,000. This leaves the returned count extremely ambiguous.
+
+## Which bird had the highest total count above a latitude of -30?
 
 ```{r}
 birds %>% 
@@ -44,11 +99,13 @@ birds %>%
   group_by(common_name) %>% 
   summarise(scientific_name, abbreviation, total_count = sum(count)) %>% 
   distinct() %>% 
-  arrange(desc(total_count)) %>% 
-  head(2)
+  ungroup() %>% 
+  slice_max(total_count, n = 1)
 ```
 
-# How many different types of birds were only ever seen in groups of 1?
+The bird with the highest total count above -30 latitude was the Wedge-tailed shearwater, with a total count of 855.
+
+## How many different types of birds were only ever seen in groups of 1?
 
 ```{r}
 birds %>% 
@@ -58,6 +115,10 @@ birds %>%
   ungroup() %>% 
   summarise(n_solo_birds = length(unique(common_name)))
 ```
+
+A slightly trickier query. Requires paring the list to just birds that only had one distinct value for count, then filtering that list to birds where that count was equal to 1.
+
+Ultimately, there are 86 individual species only seen in groups of 1.
 
 # How many penguins were seen?
 
@@ -77,5 +138,8 @@ birds %>%
   arrange(common_name)
 ```
 
+I ran two queries for this question: The first query provides a total count of penguins seen using a regular expression: 158 penguins were counted in the data.
+
+The second query returned them by individual species name, which gave 9 groups including a generic "Penguin (unidentified)". The most-seen penguin was the Little Penguin with 90 total birds counted.
 
 

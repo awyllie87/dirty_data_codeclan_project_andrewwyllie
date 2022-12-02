@@ -1,7 +1,61 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Task 4 - Halloween"
+author: "Andrew Wyllie"
+output: 
+  html_document:
+        toc: true
+        toc_float: true
 ---
+
+# Introduction
+
+This data is three consecutive years of results of a Halloween survey conducted by the satirical website boingboing.net. Users were asked to rate how a series of Halloween candies made them feel on a three point scale of "Despair", "Meh" and "Joy. 
+
+The data was provided in three separate Excel spreadsheets containing the data for the years 2015, 2016, and 2017.
+
+# Assumptions made
+
+The nature of the data meant that quite a lot of work was needed to get it in a place for easy analysis, which made a few decisions necessary.
+
+Most columns outside those on the rating scale were open to any input, and as such had some colourful responses.
+
+## Age
+
+Issue: Several people recorded their age as being an exponent (like 1E26) and others made some commentary about being too old or it not being our business.
+
+Decision: Force the column to an integer, coercing some string entries to NA, and also NA any age above 100, because I don't believe for a second anyone a century old is responding to a boingboing Halloween survey. I might have been possible to roughly estimate a few ages if they were vague, but in the interest of time I removed them.
+
+Effect: Likely a slight adjustment to any calculations around respondent age, such as the mean age found in the analysis.
+
+## The "candies"
+
+Issue: Several candies had their names changed over the course of the three years, which may influence the vote by the respondent.
+
+Decision: In many cases I combined these columns for expediency. In one case, "Bonkers" became two separate categories -- Bonkers the candy and Bonkers the board game. I couldn't be totally sure which category to assign the original column to (though I could make an educated guess), so instead opted to keep them separate.
+
+Effect: May lead to some inaccuracies when reporting total favour for specific candies.
+
+Issue: Some of these aren't candy at all!
+
+Decision: I diverged my work. Two separate tables were produced: one in which the entire vote tally is intact, and another that I manually trimmed to only contain what was identifiably what I would consider "candy". This second dataset is what was used to perform analysis.
+
+Result: More useful data. Obviously nobody likes to receive a broken glowstick.
+
+## The miscellaneous questions
+
+Issue: The survey included a grab bag of miscellaneous questions to accompany the main survey. THese are all varying levels of nonsense that the writers wanted to use to make silly statistical comparisons -- people who saw the internet dress as blue and black prefer x candy, for instance.
+
+Decision: Removed from the analysis data, but retained in the main clean data set.
+
+Result: No real effect on the analysis -- it wasn't analysed. Data is intact if any interest arises.
+
+## Countries
+
+Issue: This question field received a bonanza of stupid replies that made analysis difficult.
+
+Decision: Clean the responses as best as possible to allow for better analysis. Much of this is hard-coded.  Because I'm changing answers by my own interpretation, anything that was too ambiguous to feel I could make a call on was filtered as "Other" for the purposes of analysis. Any non-responses were noted as "Not Specified"
+
+Result: Less interesting responses, but hopefully more useful data.
 
 # Cleaning
 
@@ -9,85 +63,15 @@ Oh, boy.
 
 ## First steps
 
-The three sheets are all organised and labelled differently, on top of having different questions, so the first thing I need to do is find commonalities to unify across.
+Try and unify the columns between the three years. There was a lot of shared names between the first two years, and it was a matter of trying to make the naming common across all three where possible. Some adjustments were made for readability, but I kept the snarkier or more esoteric fields intact where possible.
 
-I figured a good place to start was to import the three sheets, run `clean_names()` from `janitor` across them, and then see if there was any immediate common factors. From glancing at the tables I suspected that the header reformat for 2017 would mean it was entirely unique compared to the previous years.
+Step two was to remove the timestamps, but retain the year of each individual dataset to allow comparative analysis later. 2017 has its data formatted somewhat different, so I chose to remove the ID field entirely.
 
-I did this using `intersect()` in a form similar to this:
-```{r eval=FALSE}
-intersect(intersect(colnames(2015data),colnames(2016data)),colnames(2017data))
-```
-Unsurprisingly, I got nothing back. Intersecting just 2015 and 2016 returned 93 columns though, which is encouraging!
+The three tables were then reorganised so that the metadata fields (name, etc.) came first, the candy rating came second, then the miscellany brought up the rear. At this point the three tables were bound together and rearranged one last time.
 
-At this point, it makes the most sense to me to work on binding 2015 and 2016, then bring the combined might to bear on 2017.
-
-## Dealing with 2015 and 2016
-
-### Identifying differences
-
-One final step was to use `setdiff()` to see specifically what columns 2015 and 2016 differed on:
-```{r eval=FALSE}
-setdiff(colnames(2015data), colnames(2016data))
-setdiff(colnames(2016data), colnames(2015data))
-```
-
-This gives me two pieces of information immediately. 
-
-PREFACE: this doesn't account for columns having the same data with a variant header -
-
-* 2015 has 31 columns that 2016 doesn't
-* 2016 has 30 columns that 2015 doesn't
-
-I could also infer some things from the difference moving to 2016. We collected:
-
-* Respondent metadata: gender, geographical
-* More candy and treat questions
-* More nonsense questions
-
-The difference between the two more generally was a variance in what "treats" were included, and what the nonsense questions were.
-
-### Bind the data
-
-Since I had so many common columns, the first thing I did was use `bind_rows()` to combine the tables. I ended up with a table with an extra 30 columns in it compared to 2016, accounting for every column of variance identified earlier.
-
-Next up, I was seeing quite a lot of NAs in some of the nonsense columns, so I checked if any were completely empty and discarded them from the table if they were.
-
-```{r eval=FALSE}
-bound_table <- bound_table %>% 
-  remove_empty(which = "cols")
-```
-
-Turns out **10 columns were completely empty**.
-
-### Organise this mess
-
-The data broadly falls into three categories: 
-
-* metadata
-* [JOY/MEH/DESPAIR] treat ratings 
-* freeform nonsense
-
-As such it would be useful to arrange it that way before doing anything further.
-
-In the context of this table, I'm considering metadata to be 
-
-* Age
-* Gender
-* Country
-* State/Province/County
-
-Organising the treat rating columns, I discover that there are numerous columns that are meant to match up but have different names, so I return and amend those before the bind happens. For the sake of the basic analysis, I also choose to omit the entire freeform section from the tables. I might restore them later for fun stuff. Maybe.
-
-After that is done, repeating the process again with 2017 is reasonably straightforward. I just need to start by trimming the Q#_ prefix from the requisite columns and renaming whatever is required to match previous convention.
-
-### A note on duplicate columns
-
-There's a few instances where the wording of the treat changes slightly between years, such as "Sweetums" becoming "Sweetums (a friend to diabetes)" and licorice changing to Not Black and Yes Black.
-
-The reality is these could provoke the respondents into different answers, but for sake of simplicity I am combining where it seems reasonable.
+At this point I wrote a copy of the entire clean dataset to disk, and created a second "simplified" one with the adjustments noted above. No manipulation has been performed on the clean dataset beyond unifying the three years and some column name adjustments.
 
 # Analysis
-
 
 ```{r message=FALSE}
 library(tidyverse)
@@ -98,7 +82,8 @@ library(here)
 source(here("data_cleaning_scripts/clean_data.R"))
 halloween <- read_csv(here("clean_data/halloween_simplified.csv"))
 ```
-### 1. What is the total number of candy ratings given across the three years. (Number of candy ratings, not the number of raters. Don’t count missing values)
+
+### 1. What is the total number of candy ratings given across the three years.
 
 ```{r}
 halloween %>% 
@@ -106,6 +91,8 @@ halloween %>%
   mutate(total = rowSums(.)) %>% 
   select(total)
 ```
+
+Total number of individual candy ratings across the simplified data set is 615,215.
 
 ### 2. What was the average age of people who are going out trick or treating?
 
@@ -115,6 +102,8 @@ halloween %>%
   summarise(avg_age = round(mean(age),1))
 ```
 
+The average age of people who marked that they intended to go out trick or treating is 35.
+
 ### 3. What was the average age of people who are not going trick or treating?
 
 ```{r}
@@ -122,6 +111,8 @@ halloween %>%
   filter(!is.na(age), going_out == "No") %>% 
   summarise(avg_age = round(mean(age), 1))
 ```
+
+The average age of people who marked that they intended to not go out trick or treating is a little over 39.
 
 ### 4. For each of joy, despair and meh, which candy bar received the most of these ratings?
 
@@ -136,6 +127,10 @@ halloween %>%
   slice_max(count)
 ```
 
+For the 3 rating categories, "gum from baseball cards" was rated as "Despair" most often. This is not a surprise as the gum from baseball cards is awful.
+
+"Any full-sized candy bar" received the most joy, and lollipops the most indifference.
+
 ### 5. How many people rated Starburst as despair?
 
 ```{r}
@@ -144,6 +139,8 @@ halloween %>%
   filter(starburst == "DESPAIR") %>% 
   summarise(votes = n())
 ```
+
+1,990 people rated Starburst as "despair"
 
 ### 6. What was the most popular candy bar by this rating system for each gender in the dataset ?
 
@@ -168,6 +165,8 @@ halloween %>%
   arrange(-score)
 ```
 
+By this scoring method, every category rated "Any full-sized candy bar" as the greatest source of joy. This is not a surprise as who doesn't like a free full-sized candy bar?
+
 ### 7. What was the most popular candy bar in each year?
 
 Scoring:
@@ -190,6 +189,8 @@ halloween %>%
   slice_max(score) %>% 
   arrange(year)
 ```
+
+This result persists when analysing across the three years in the data.
 
 ### 8. What was the most popular candy bar by this rating for people in US, Canada, UK, and all other countries?
 
@@ -216,10 +217,15 @@ halloween %>%
   group_by(country, candy) %>% 
   summarise(score = sum(score)) %>% 
   group_by(country) %>% 
-  filter(country != "NOT SPECIFIED", candy != "any_full_sized_candy_bar" ) %>% 
   slice_max(score) %>% 
   arrange(-score)
 ```
+
+The result when splitting by country is more interesting. The UK notably favours three candies joint favourite, and none of them are just any full-sized candy bar! Not sure how I feel about our answers, personally.
+
+# Any other insights?
+
+As a quick curiosity, I thought it would be interesting to examine the contents of the additional columns seeking any additional joys and despairs. I imported the full clean data set and exported every phrase (any collection words separated by a comma) from the column.
 
 ```{r}
 halloween2 <- read_csv(here("clean_data/halloween.csv"))
@@ -242,6 +248,8 @@ joys <- halloween2 %>%
   pull()
 ```
 
+### Misc Joy
+
 ```{r}
 tibble(word(joys, sep = ",")) %>% 
   rename(word = `word(joys, sep = ",")`) %>% 
@@ -259,6 +267,8 @@ despairs <- halloween2 %>%
   pull()
 ```
 
+### Misc despair
+
 ```{r}
 tibble(word(despairs, sep = ",")) %>% 
   rename(word = `word(despairs, sep = ",")`) %>% 
@@ -269,4 +279,4 @@ tibble(word(despairs, sep = ",")) %>%
   arrange(-count) %>% 
   slice_max(count, n= 10)
 ```
-
+It's worth noting that a few of the popular responses ended up as specific fields, so some candies actually have slightly higher Joy ratings than recorded. Almond Joy was such a popular response it actually surprises me it wasn't included in the survey.
