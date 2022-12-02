@@ -157,10 +157,8 @@ halloween %>%
   group_by(candy, rating, gender) %>% 
   filter(!is.na(rating)) %>% 
   mutate(score = recode(rating, "DESPAIR" = -1, "JOY" = 1, "MEH" = 0)) %>% 
-  summarise(score = sum(score)) %>% 
   group_by(gender, candy) %>% 
   summarise(score = sum(score)) %>% 
-  group_by(gender) %>% 
   slice_max(score) %>% 
   arrange(-score)
 ```
@@ -182,10 +180,8 @@ halloween %>%
   group_by(candy, rating, year) %>% 
   filter(!is.na(rating)) %>% 
   mutate(score = recode(rating, "DESPAIR" = -1, "JOY" = 1, "MEH" = 0)) %>% 
+  group_by(year, candy) %>%
   summarise(score = sum(score)) %>% 
-  group_by(year, candy) %>% 
-  summarise(score = sum(score)) %>% 
-  group_by(year) %>%
   slice_max(score) %>% 
   arrange(year)
 ```
@@ -213,10 +209,8 @@ halloween %>%
            str_detect(country, "CANADA") ~ country,
            str_detect(country, "NOT SPECIFIED") ~ country,
            TRUE ~ "OTHER")) %>% 
-  summarise(score = sum(score)) %>% 
   group_by(country, candy) %>% 
   summarise(score = sum(score)) %>% 
-  group_by(country) %>% 
   slice_max(score) %>% 
   arrange(-score)
 ```
